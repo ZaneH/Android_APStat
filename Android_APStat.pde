@@ -69,8 +69,8 @@ void drawClassPicking() {
   fill(255);
   textSize(64);
   textAlign(CENTER, CENTER);
-  text("Band", (-400 * (0.5 - 0)), 0);
-  text("Chorus", (-400 * (0.5 - 1)), 0);
+  text("Male", (-400 * (0.5 - 0)), 0);
+  text("Female", (-400 * (0.5 - 1)), 0);
 
   popMatrix();
 }
@@ -232,11 +232,11 @@ void checkInteraction() {
   } else if (appState == AppState.ClassPicking) {
     if (overCircle((-400 * (0.5 - 0)) + width / 2, 0 + height / 2, 700)) {
       print("BAND CHOSEN");
-      classChosen = "Band";
+      classChosen = "Male";
       appState = AppState.MainMenu;
     } else if (overCircle((-400 * (0.5 - 1)) + width / 2, 0 + height / 2, 700)) {
       print("CHORUS CHOSEN");
-      classChosen = "Chorus";
+      classChosen = "Female";
       appState = AppState.MainMenu;
     }
   }
