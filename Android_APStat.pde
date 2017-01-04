@@ -1,18 +1,24 @@
 import http.requests.*;
 import cassette.audiofiles.*;
+import org.apache.http.util.EntityUtils;
 
 private enum AppState {
   MainMenu, 
-    Listening
+    Listening, 
+    ClassPicking
 }
 
-AppState appState = AppState.MainMenu;
+AppState appState = AppState.ClassPicking;
 
 // this makes touching 2 things by holding impossible
 boolean touched = false;
 
 int pickedStage = 0;
+
 char responses[] = new char[5];
+char correctResponses[] = {'D', 'E', 'A', 'G', 'C'};
+
+String classChosen = "";
 
 // pickedStage #
 SoundFile aNote; // 3
@@ -38,7 +44,35 @@ void draw() {
     drawMainMenu();
   } else if (appState == AppState.Listening) {
     drawListening();
+  } else if (appState == AppState.ClassPicking) {
+    drawClassPicking();
   }
+}
+
+void drawClassPicking() {
+  pushMatrix();
+  translate(width / 2, height / 2);
+
+  for (int i = 0; i < 2; i++) {
+    // drop shadow
+    fill(50, 0, 0);
+    noStroke();
+    ellipse((-400 * (0.5 - i)) + 6, 6, 350, 350);
+
+    // button
+    fill(150, 0, 0);
+    strokeWeight(1);
+    ellipse((-400 * (0.5 - i)), 0, 350, 350);
+  }
+
+  // text
+  fill(255);
+  textSize(64);
+  textAlign(CENTER, CENTER);
+  text("Band", (-400 * (0.5 - 0)), 0);
+  text("Chorus", (-400 * (0.5 - 1)), 0);
+
+  popMatrix();
 }
 
 void drawMainMenu() {
@@ -53,6 +87,7 @@ void drawMainMenu() {
   for (int i = 0; i < 5; i++) {
     // drop shadow
     if (responses[i] != 0) {
+      // color green if answered
       fill(39, 174, 96);
     } else {
       fill(50, 0, 0);
@@ -62,6 +97,7 @@ void drawMainMenu() {
 
     // button
     if (responses[i] != 0) {
+      // color green if answered
       fill(46, 204, 113);
     } else {
       fill(150, 0, 0);
@@ -144,7 +180,7 @@ void checkInteraction() {
     }
   } else if (appState == AppState.Listening) {
     // only check if buttons are being touched on the listening screen
-    if (overCircle((-150 * (2.5 - 0)) + width / 2, 0 + height / 2, 300)) {
+    if (overCircle((-150 * (2.5 - 0)) + width / 2, 0 + height / 2, 240)) {
       // play button was pressed
       print("PLAY BUTTON PRESSED");
       switch (pickedStage) {
@@ -167,30 +203,40 @@ void checkInteraction() {
         // if this happens...well...let's just say this shouldn't happen
         print("No note selected...");
       }
-    } else if (overCircle((-150 * (2.5 - 1)) + width / 2, 0 + height / 2, 300)) {
+    } else if (overCircle((-150 * (2.5 - 1)) + width / 2, 0 + height / 2, 240)) {
       // a was selected
       print("A BUTTON PRESSED");
       responses[pickedStage - 1] = 'A';
       appState = AppState.MainMenu;
-    } else if (overCircle((-150 * (2.5 - 2)) + width / 2, 0 + height / 2, 300)) {
+    } else if (overCircle((-150 * (2.5 - 2)) + width / 2, 0 + height / 2, 240)) {
       // c was selected
       print("C BUTTON PRESSED");
       responses[pickedStage - 1] = 'C';
       appState = AppState.MainMenu;
-    } else if (overCircle((-150 * (2.5 - 3)) + width / 2, 0 + height / 2, 300)) {
+    } else if (overCircle((-150 * (2.5 - 3)) + width / 2, 0 + height / 2, 240)) {
       // d was selected
       print("D BUTTON PRESSED");
       responses[pickedStage - 1] = 'D';
       appState = AppState.MainMenu;
-    } else if (overCircle((-150 * (2.5 - 4)) + width / 2, 0 + height / 2, 300)) {
+    } else if (overCircle((-150 * (2.5 - 4)) + width / 2, 0 + height / 2, 240)) {
       // e was selected
       print("E BUTTON PRESSED");
       responses[pickedStage - 1] = 'E';
       appState = AppState.MainMenu;
-    } else if (overCircle((-150 * (2.5 - 5)) + width / 2, 0 + height / 2, 300)) {
+    } else if (overCircle((-150 * (2.5 - 5)) + width / 2, 0 + height / 2, 240)) {
       // g was selected
       print("G BUTTON PRESSED");
       responses[pickedStage - 1] = 'G';
+      appState = AppState.MainMenu;
+    }
+  } else if (appState == AppState.ClassPicking) {
+    if (overCircle((-400 * (0.5 - 0)) + width / 2, 0 + height / 2, 700)) {
+      print("BAND CHOSEN");
+      classChosen = "Band";
+      appState = AppState.MainMenu;
+    } else if (overCircle((-400 * (0.5 - 1)) + width / 2, 0 + height / 2, 700)) {
+      print("CHORUS CHOSEN");
+      classChosen = "Chorus";
       appState = AppState.MainMenu;
     }
   }
@@ -198,9 +244,16 @@ void checkInteraction() {
 
 void submitSurvey() {
   PostRequest post = new PostRequest("https://docs.google.com/forms/d/e/1FAIpQLScYhfEdg2_gospmdjSekQ_edXxgqmIFTHgV8oW4seMv0tW_sA/formResponse", "UTF-8");
-  post.addData("entry.19168660", "Band");
-  post.addData("entry.790481548", "3");
-  //post.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+  post.addData("entry.19168660", classChosen);
+  // tally score
+  int score = 0;
+  for (int i = 0; i < responses.length; i++) {
+    if (responses[i] == correctResponses[i]) {
+      score++;
+    }
+  }
+  post.addData("entry.790481548", Integer.toString(score));
+
   post.send();
 }
 
